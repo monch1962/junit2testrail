@@ -1,6 +1,14 @@
-package junit2testrail
+package main
 
-import "encoding/xml"
+import (
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+	"log"
+	"os"
+
+	"golang.org/x/net/html/charset"
+)
 
 // Testsuites mirrors the structure of JUnit XML
 type Testsuites struct {
@@ -33,3 +41,20 @@ type Testsuites struct {
 		} `xml:"testcase"`
 	} `xml:"testsuite"`
 } 
+
+
+func main() {
+        dec := xml.NewDecoder(os.Stdin)
+        dec.CharsetReader = charset.NewReaderLabel
+        dec.Strict = false
+
+        var doc Testsuites
+        if err := dec.Decode(&doc); err != nil {
+                log.Fatal(err)
+        }
+        b, err := json.Marshal(doc)
+        if err != nil {
+                log.Fatal(err)
+        }
+        fmt.Println(string(b))
+}
