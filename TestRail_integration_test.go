@@ -75,6 +75,7 @@ import (
     for _, p := range projects{
 	  log.Println(p.ID)
 	  log.Printf("project: %v\n", p)
+	  log.Printf("project name: %v\n", p.Name)
 	  suites, err := client.GetSuites(p.ID)
 	  if err != nil {
 		  log.Fatalf("Error reading suites from project %v\n", p)
@@ -84,5 +85,27 @@ import (
 		  log.Printf("suite ID: %v, %v\n", s.ID, s.Name)
 	  }
 	}
-	
+  }
+
+  func TestFindProjectByName(t *testing.T) {
+	username := os.Getenv("USERNAME")
+	password := os.Getenv("PASSWORD")
+	projectName := "My Test Project"
+	testrailServer := os.Getenv("TESTRAIL_SERVER") // e.g. https://id.testrail.io
+
+    client := testrail.NewClient(testrailServer, username, password)
+
+	projects, err := client.GetProjects()
+	if err != nil {
+		log.Fatalf("Error reading projects: %v\n", err)
+	}
+
+    for _, p := range projects{
+	  log.Println(p.ID)
+	  log.Printf("project: %v\n", p)
+	  log.Printf("project name: %v\n", p.Name)
+	  if p.Name == projectName {
+		  log.Printf("Found project '%s' is id %d\n", projectName, p.ID)
+	  }
+	}
   }

@@ -3,9 +3,11 @@ package main
 import (
 	//"encoding/json"
 	"encoding/xml"
+	"errors"
 	//"fmt"
 	"log"
 	"os"
+
 	//"strconv"
 	"time"
 
@@ -47,7 +49,7 @@ type Testsuites struct {
 	} `xml:"testsuite"`
 } 
 
-func readEnvVars() (string, string, string) {
+func readEnvVars() (string, string, string, string, string) {
 	testRailServer := os.Getenv("TESTRAIL_SERVER")
 	if testRailServer == "" {
 		log.Fatalln("Environment variable TESTRAIL_SERVER not specified")
@@ -60,7 +62,15 @@ func readEnvVars() (string, string, string) {
 	if password == "" {
 		log.Fatalln("Environment variable PASSWORD not specified")
 	}
-	return testRailServer,username,password
+	projectName := os.Getenv("PROJECT_NAME")
+	if password == "" {
+		log.Fatalln("Environment variable PROJECT_NAME not specified")
+	}
+	suiteName := os.Getenv("SUITE_NAME")
+	if suiteName == "" {
+		log.Fatalln("Environment variable SUITE_NAME not specified")
+	}
+	return testRailServer,username,password, projectName, suiteName
 }
 
 func readJunitXML(file *os.File) Testsuites {
@@ -70,7 +80,7 @@ func readJunitXML(file *os.File) Testsuites {
 
 	var doc Testsuites
 	if err := dec.Decode(&doc); err != nil {
-		log.Fatal(err)
+		log.Panicf(err.Error())
 	}
 	return doc
 }
@@ -88,18 +98,22 @@ func logJunitDetail(j Testsuites) {
 	}
 }
 
-func processResultsToTestRail(j Testsuites, testRailServer string, username string, password string) {
+func processResultsToTestRail(j Testsuites, client *testrail.Client, projectID int, suiteID int) {
 	//logJunitDetail(j)
-	//log.Printf("TESTRAIL_SERVER: %s, USERNAME: %s, PASSWORD: %s\n", testRailServer, username, password)
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	client := testrail.NewClient(testRailServer, username, password)
 	for i,tc := range j.Testsuite.Testcase {
 
 		//duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
 		//if err != nil {
 		//	log.Fatalf("Error converting %v to duration\n",tc.Time)
 		//}
+		
+		tcName := tc.Name
+		testcaseID, err := getTestCaseID(client, projectID, suiteID, tcName)
+		if err != nil {
+			log.Panicf("Couldn't find test case '%s'\n", tc.Name)
+		}
 		var tcStatus int
 		if tc.Failure.Text == "" {
 			tcStatus = testrail.StatusPassed
@@ -117,17 +131,84 @@ func processResultsToTestRail(j Testsuites, testRailServer string, username stri
 		}
 
 		log.Printf("tsr: %v\n", tsr)
-		result,err := client.AddResultForCase(1, 1, tsr)
+		result,err := client.AddResultForCase(projectID, testcaseID, tsr)
 		if err != nil {
-			log.Fatalf("Error adding results for test case %d: %v\n", i, err)
+			log.Panicf("Error adding results for test case %d: %v\n", i, err)
 		}
 		log.Printf("Success adding results for test case %d: %v\n", i, result)
 	}
 }
 
+func getProjectID(client *testrail.Client, projectName string) (int,error) {
+	projects, err := client.GetProjects()
+	if err != nil {
+		log.Panicf("Error reading projects: %v\n", err)
+	}
+
+    for _, p := range projects{
+	  //log.Println(p.ID)
+	  //log.Printf("project: %v\n", p)
+	  //log.Printf("project name: %v\n", p.Name)
+	  if p.Name == projectName {
+		  log.Printf("Found project '%s' is id %d\n", projectName, p.ID)
+		  return p.ID, nil
+	  }
+	}
+	return 0,errors.New("Couldn't find project")
+}
+
+func getSuiteID(client *testrail.Client, projectID int, suiteName string) (int, error) {
+	suites, err := client.GetSuites(projectID)
+	if err != nil {
+		log.Panicf("Error reading suites: %v\n", err)
+	}
+
+    for _, s := range suites{
+	  //log.Println(s.ID)
+	  //log.Printf("suite: %v\n", s)
+	  //log.Printf("suite name: %v\n", s.Name)
+	  if s.Name == suiteName {
+		  log.Printf("Found suite '%s' for project '%d' is id %d\n", suiteName, projectID, s.ID)
+		  return s.ID, nil
+	  }
+	}
+	return 0, errors.New("Couldn't find suite")
+}
+
+func getTestCaseID(client *testrail.Client, projectID int, suiteID int, testcaseName string) (int, error) {
+	testcases, err := client.GetCases(projectID, suiteID)
+	if err != nil {
+		log.Panicf("Error reading testcases: %v\n", err)
+	}
+
+    for _, tc := range testcases{
+	  //log.Println(s.ID)
+	  //log.Printf("suite: %v\n", s)
+	  //log.Printf("suite name: %v\n", s.Name)
+	  if tc.Title == testcaseName {
+		  log.Printf("Found testcase '%s' for suite '%d', project '%d' is id %d\n", testcaseName, suiteID, projectID, tc.ID)
+		  return tc.ID, nil
+	  }
+	}
+	return 0, errors.New("Couldn't find test case")
+}
+
 func main() {
-	testRailServer, username, password := readEnvVars()
+	testrailServer, username, password, projectName, suiteName := readEnvVars()
 	junitDoc := readJunitXML(os.Stdin)
-	processResultsToTestRail(junitDoc, testRailServer, username, password)	
+	client := testrail.NewClient(testrailServer, username, password)
+	projectID,err := getProjectID(client, projectName)
+	if err != nil {
+		log.Panicf("Couldn't find project named '%s'\n", projectName)
+	}
+	log.Printf("Project ID for '%s' is %d\n", projectName, projectID)
+	
+	suiteID, err := getSuiteID(client, projectID, suiteName)
+	if err != nil {
+		log.Panicf("Couldn't find suite named '%s' for project '%s'\n", suiteName, projectName)
+	}
+
+	log.Printf("Suitename '%s' has id %d\n", suiteName, suiteID)
+	processResultsToTestRail(junitDoc, client, projectID, suiteID)	
 	//log.Printf("Results: %v\n", success)
 }
