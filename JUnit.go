@@ -73,11 +73,6 @@ func readJunitXML(file *os.File) Testsuites {
 		log.Fatal(err)
 	}
 	return doc
-	//junitJSON, err := json.Marshal(doc)
-    //if err != nil {
-    //    log.Fatal(err)
-	//}
-	//return junitJSON
 }
 
 func logJunitDetail(j Testsuites) {
@@ -97,7 +92,6 @@ func processResultsToTestRail(j Testsuites, testRailServer string, username stri
 	//logJunitDetail(j)
 	//log.Printf("TESTRAIL_SERVER: %s, USERNAME: %s, PASSWORD: %s\n", testRailServer, username, password)
 	now := time.Now().Format("2006-01-02 15:04:05")
-	//var trSendableResults testrail.SendableResult
 
 	client := testrail.NewClient(testRailServer, username, password)
 	for i,tc := range j.Testsuite.Testcase {
@@ -129,14 +123,6 @@ func processResultsToTestRail(j Testsuites, testRailServer string, username stri
 		}
 		log.Printf("Success adding results for test case %d: %v\n", i, result)
 	}
-
-/*
-	result,err := client.AddResults(1,trSendableResults)
-	if err != nil {
-		log.Fatalf("Error adding results to Testrail: %v", err)
-	}
-	log.Println(result)*/
-	//return []testrail.Result{}
 }
 
 func main() {
