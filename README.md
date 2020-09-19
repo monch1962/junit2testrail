@@ -2,3 +2,7 @@
 
 # junit2testrail
 Process JUnit test results into TestRail
+
+## Example usage
+
+`$ cat junit-sample.xml | TESTRAIL_SERVER=... USERNAME=... PASSWORD=... PROJECT_NAME="My Test Project" SUITE_NAME="Master" go run JUnit.go`
