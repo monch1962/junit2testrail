@@ -3,12 +3,14 @@ package main
 import (
 	//"encoding/json"
 	"encoding/xml"
-	"fmt"
+	//"fmt"
 	"log"
 	"os"
+	//"strconv"
+	"time"
 
 	"github.com/educlos/testrail"
-	str2duration "github.com/xhit/go-str2duration/v2"
+	//str2duration "github.com/xhit/go-str2duration/v2"
 	"golang.org/x/net/html/charset"
 )
 
@@ -91,44 +93,55 @@ func logJunitDetail(j Testsuites) {
 	}
 }
 
-func processResultsToTestRail(j Testsuites, testRailServer string, username string, password string) []testrail.Result{
+func processResultsToTestRail(j Testsuites, testRailServer string, username string, password string) {
 	//logJunitDetail(j)
 	//log.Printf("TESTRAIL_SERVER: %s, USERNAME: %s, PASSWORD: %s\n", testRailServer, username, password)
-	var trSendableResults testrail.SendableResults
-	
-	for _,tc := range j.Testsuite.Testcase {
-
-		duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
-		if err != nil {
-			log.Fatalf("Error converting %v to duration\n",tc.Time)
-		}
-		r := testrail.SendableResult{
-			Elapsed: *testrail.TimespanFromDuration(duration),
-			StatusID: testrail.StatusPassed,
-			Comment: tc.Failure.Text,
-		}
-		tr := testrail.Results{
-			TestID: 1,
-			SendableResult: r,
-		}
-		log.Printf("tr: %v\n",tr)
-		log.Printf("trSendableResults: %v\n", trSendableResults)
-		//trSendableResults = append(trSendableResults, tr)
-		//trSendableResults.Results[0].TestID = 1
-	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	//var trSendableResults testrail.SendableResult
 
 	client := testrail.NewClient(testRailServer, username, password)
+	for i,tc := range j.Testsuite.Testcase {
+
+		//duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
+		//if err != nil {
+		//	log.Fatalf("Error converting %v to duration\n",tc.Time)
+		//}
+		var tcStatus int
+		if tc.Failure.Text == "" {
+			tcStatus = testrail.StatusPassed
+		} else {
+			tcStatus = testrail.StatusFailed
+		}
+
+		tsr := testrail.SendableResult{
+			//Elapsed: *testrail.TimespanFromDuration(duration),
+			StatusID: tcStatus,
+			Comment: tc.Failure.Text,
+			Version: now,
+			Defects: "",
+			//AssignedToID: 1,
+		}
+
+		log.Printf("tsr: %v\n", tsr)
+		result,err := client.AddResultForCase(1, 1, tsr)
+		if err != nil {
+			log.Fatalf("Error adding results for test case %d: %v\n", i, err)
+		}
+		log.Printf("Success adding results for test case %d: %v\n", i, result)
+	}
+
+/*
 	result,err := client.AddResults(1,trSendableResults)
 	if err != nil {
 		log.Fatalf("Error adding results to Testrail: %v", err)
 	}
-	log.Println(result)
-	return result
+	log.Println(result)*/
+	//return []testrail.Result{}
 }
 
 func main() {
 	testRailServer, username, password := readEnvVars()
 	junitDoc := readJunitXML(os.Stdin)
-	success := processResultsToTestRail(junitDoc, testRailServer, username, password)	
-	log.Printf("Results: %v\n", success)
+	processResultsToTestRail(junitDoc, testRailServer, username, password)	
+	//log.Printf("Results: %v\n", success)
 }
