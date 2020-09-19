@@ -1,3 +1,5 @@
+// +build integration
+
 package main
 
 import (
@@ -9,13 +11,14 @@ import (
 
   func TestRailAccess(t *testing.T){
 
-    username := "monch1962@gmail.com"
+	testrailServer := os.Getenv("TESTRAIL_SERVER") // e.g. https://id.testrail.io
+    username := os.Getenv("USER")
 	password := os.Getenv("PASSWORD") // sent to me in email...
 	
 	var result testrail.SendableResult
-	result.StatusID = 2
+	result.StatusID = 5
 
-    client := testrail.NewClient("https://monch1962a.testrail.com", username, password)
+    client := testrail.NewClient(testrailServer, username, password)
 
     projectID := 1
     suiteID := 1
