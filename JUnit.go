@@ -3,7 +3,7 @@ package main
 import (
 	//"encoding/json"
 	"encoding/xml"
-	//"fmt"
+	"fmt"
 	"log"
 	"os"
 
@@ -91,14 +91,19 @@ func logJunitDetail(j Testsuites) {
 	}
 }
 
-func processResultsToTestRail(j Testsuites, testRailServer string, username string, password string) {
-	logJunitDetail(j)
-	log.Printf("TESTRAIL_SERVER: %s, USERNAME: %s, PASSWORD: %s\n", testRailServer, username, password)
+func processResultsToTestRail(j Testsuites, testRailServer string, username string, password string) []testrail.Result{
+	//logJunitDetail(j)
+	//log.Printf("TESTRAIL_SERVER: %s, USERNAME: %s, PASSWORD: %s\n", testRailServer, username, password)
 	var trSendableResults testrail.SendableResults
+	
 	for _,tc := range j.Testsuite.Testcase {
-		//tcDuration := fmt.Sprintf("%sms",tc.Time)
+
+		duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
+		if err != nil {
+			log.Fatalf("Error converting %v to duration\n",tc.Time)
+		}
 		r := testrail.SendableResult{
-			//Elapsed: testrail.TimespanFromDuration(str2duration.ParseDuration(tcDuration)),
+			Elapsed: *testrail.TimespanFromDuration(duration),
 			StatusID: testrail.StatusPassed,
 			Comment: tc.Failure.Text,
 		}
@@ -106,18 +111,24 @@ func processResultsToTestRail(j Testsuites, testRailServer string, username stri
 			TestID: 1,
 			SendableResult: r,
 		}
-		trSendableResults.append(trSendableResults,tr)
+		log.Printf("tr: %v\n",tr)
+		log.Printf("trSendableResults: %v\n", trSendableResults)
+		//trSendableResults = append(trSendableResults, tr)
+		//trSendableResults.Results[0].TestID = 1
 	}
-	client := testrail.NewClient("https://example.testrail.com", username, password)
+
+	client := testrail.NewClient(testRailServer, username, password)
 	result,err := client.AddResults(1,trSendableResults)
 	if err != nil {
 		log.Fatalf("Error adding results to Testrail: %v", err)
 	}
 	log.Println(result)
+	return result
 }
 
 func main() {
 	testRailServer, username, password := readEnvVars()
 	junitDoc := readJunitXML(os.Stdin)
-	processResultsToTestRail(junitDoc, testRailServer, username, password)	
+	success := processResultsToTestRail(junitDoc, testRailServer, username, password)	
+	log.Printf("Results: %v\n", success)
 }
