@@ -37,3 +37,4 @@ or
 - consider adding support for Zephyr, XRay, ALM etc. (shouldn't be hard, just don't need it yet)
 - work out how to drive this from Kubernetes-hosted infra, as part of a completely automated testing capability (e.g. test execution driven by Gitops)
 - consider whether this should be installable as a Knative FaaS
+- build in CI to build/test & deploy to a Docker registry (docker.io, GCP, AWS, Azure, ...)
