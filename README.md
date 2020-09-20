@@ -28,10 +28,11 @@ or
 `$ docker run -e ...`
 
 ## TODO
-- decide how to handle JUnit test cases that don't exist within the nominated project/suite
-  - ignore them?
-  - error out?
-  - create the test case within the project/suite and update it?
+- ~~decide how to handle JUnit test cases that don't exist within the nominated project/suite~~
+  - ~~ignore them?~~
+  - ~~error out?~~
+  - ~~create the test case within the project/suite and update it?~~
+  - decided to handle this by automatically adding a new test case within the project/suite, then updating it
 - couldn't get batches of updates working due to some strangeness in the TestRail API - at the moment I'm doing one update per testcase, which isn't ideal
 - write some `--help` documentation
 - create some detailed docs

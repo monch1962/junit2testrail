@@ -190,7 +190,19 @@ func getTestCaseID(client *testrail.Client, projectID int, suiteID int, testcase
 		  return tc.ID, nil
 	  }
 	}
-	return 0, errors.New("Couldn't find test case")
+	//return 0, errors.New("Couldn't find test case")
+	newTestcase, err := addTestCase(client, suiteID, testcaseName)
+	return newTestcase.ID, err
+}
+
+func addTestCase(client *testrail.Client, suiteID int, testcaseName string) (testrail.Case, error) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+	newTestCase := testrail.SendableCase{
+		Title: testcaseName,
+		Date: now,
+	}
+	tc, err := client.AddCase(suiteID, newTestCase)
+	return tc,err
 }
 
 func main() {
