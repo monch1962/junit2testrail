@@ -13,6 +13,7 @@ import (
 
 	"github.com/educlos/testrail"
 	//str2duration "github.com/xhit/go-str2duration/v2"
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/net/html/charset"
 )
 
@@ -21,15 +22,18 @@ import (
 type Testsuites struct {
 	XMLName   xml.Name `xml:"testsuites"`
 	Text      string   `xml:",chardata"`
-	Testsuite struct {
+	Testsuite []struct {
 		Text       string `xml:",chardata"`
+		Name       string `xml:"name,attr"`
+		Errors     string `xml:"errors,attr"`
 		Tests      string `xml:"tests,attr"`
 		Failures   string `xml:"failures,attr"`
 		Time       string `xml:"time,attr"`
-		Name       string `xml:"name,attr"`
+		Timestamp  string `xml:"timestamp,attr"`
+		Skipped    string `xml:"skipped,attr"`
 		Properties struct {
 			Text     string `xml:",chardata"`
-			Property struct {
+			Property []struct {
 				Text  string `xml:",chardata"`
 				Name  string `xml:"name,attr"`
 				Value string `xml:"value,attr"`
@@ -43,11 +47,11 @@ type Testsuites struct {
 			Failure   struct {
 				Text    string `xml:",chardata"`
 				Message string `xml:"message,attr"`
-				Type    string `xml:"type,attr"`
 			} `xml:"failure"`
+			Skipped string `xml:"skipped"`
 		} `xml:"testcase"`
 	} `xml:"testsuite"`
-} 
+}
 
 func readEnvVars() (string, string, string, string, string) {
 	testRailServer := os.Getenv("TESTRAIL_SERVER")
@@ -57,7 +61,7 @@ func readEnvVars() (string, string, string, string, string) {
 	username := os.Getenv("USERNAME")
 	if username == "" {
 		log.Fatalln("Environment variable USERNAME not specified")
-	}	
+	}
 	password := os.Getenv("PASSWORD")
 	if password == "" {
 		log.Fatalln("Environment variable PASSWORD not specified")
@@ -70,7 +74,7 @@ func readEnvVars() (string, string, string, string, string) {
 	if suiteName == "" {
 		log.Fatalln("Environment variable SUITE_NAME not specified")
 	}
-	return testRailServer,username,password, projectName, suiteName
+	return testRailServer, username, password, projectName, suiteName
 }
 
 func readJunitXML(file *os.File) Testsuites {
@@ -85,16 +89,21 @@ func readJunitXML(file *os.File) Testsuites {
 	return doc
 }
 
-func logJunitDetail(j Testsuites) {
-	for i,tc := range j.Testsuite.Testcase {
-		log.Printf("%v\n",j)
-		log.Printf("%v\n",tc)
-		log.Printf("Number of tests: %v\n", j.Testsuite.Tests)
-		log.Printf("Number of failed tests: %v\n", j.Testsuite.Failures)
-		log.Printf("Testcase %d: %v\n", i, tc)
-		log.Printf("Testcase %d name: %v\n", i, tc.Name)
-		log.Printf("Testcase %d failure message: %v\n", i,tc.Failure.Text)
-		log.Println("-------------------------------------------")	
+func logJunitDetail(tss Testsuites) {
+	log.Printf("%+v\n", tss.Testsuite)
+	spew.Dump(tss.Testsuite)
+	for _, ts := range tss.Testsuite {
+		log.Printf("Number of tests: %v\n", ts.Tests)
+		log.Printf("Number of failed tests: %v\n", ts.Failures)
+		for i, tc := range ts.Testcase {
+			log.Printf("%v\n", ts)
+			log.Printf("%v\n", tc)
+
+			log.Printf("Testcase %d: %v\n", i, tc)
+			log.Printf("Testcase %d name: %v\n", i, tc.Name)
+			log.Printf("Testcase %d failure message: %v\n", i, tc.Failure.Text)
+			log.Println("-------------------------------------------")
+		}
 	}
 }
 
@@ -102,59 +111,63 @@ func processResultsToTestRail(j Testsuites, client *testrail.Client, projectID i
 	//logJunitDetail(j)
 	now := time.Now().Format("2006-01-02 15:04:05")
 
-	for i,tc := range j.Testsuite.Testcase {
+	for _, ts := range j.Testsuite {
+		for i, tc := range ts.Testcase {
 
-		//duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
-		//if err != nil {
-		//	log.Fatalf("Error converting %v to duration\n",tc.Time)
-		//}
-		
-		tcName := tc.Name
-		testcaseID, err := getTestCaseID(client, projectID, suiteID, tcName)
-		if err != nil {
-			log.Panicf("Couldn't find test case '%s'\n", tc.Name)
-		}
-		var tcStatus int
-		if tc.Failure.Text == "" {
-			tcStatus = testrail.StatusPassed
-		} else {
-			tcStatus = testrail.StatusFailed
-		}
+			//duration,err := str2duration.ParseDuration(fmt.Sprintf("%ss",tc.Time))
+			//if err != nil {
+			//	log.Fatalf("Error converting %v to duration\n",tc.Time)
+			//}
 
-		tsr := testrail.SendableResult{
-			//Elapsed: *testrail.TimespanFromDuration(duration),
-			StatusID: tcStatus,
-			Comment: tc.Failure.Text,
-			Version: now,
-			Defects: "",
-			//AssignedToID: 1,
-		}
+			tcName := tc.Name
+			testcaseID, err := getTestCaseID(client, projectID, suiteID, tcName)
+			if err != nil {
+				log.Panicf("Couldn't find test case '%s'\n", tc.Name)
+			}
+			var tcStatus int
+			if tc.Failure.Text != "" {
+				tcStatus = testrail.StatusFailed
+			} else if tc.Skipped != "" {
+				tcStatus = testrail.StatusUntested
+			} else {
+				tcStatus = testrail.StatusPassed
+			}
 
-		log.Printf("tsr: %v\n", tsr)
-		result,err := client.AddResultForCase(projectID, testcaseID, tsr)
-		if err != nil {
-			log.Panicf("Error adding results for test case %d: %v\n", i, err)
+			tsr := testrail.SendableResult{
+				//Elapsed: *testrail.TimespanFromDuration(duration),
+				StatusID: tcStatus,
+				Comment:  tc.Failure.Text,
+				Version:  now,
+				Defects:  "",
+				//AssignedToID: 1,
+			}
+
+			log.Printf("tsr: %v\n", tsr)
+			result, err := client.AddResultForCase(projectID, testcaseID, tsr)
+			if err != nil {
+				log.Panicf("Error adding results for test case %d: %v\n", i, err)
+			}
+			log.Printf("Success adding results for test case %d: %v\n", i, result)
 		}
-		log.Printf("Success adding results for test case %d: %v\n", i, result)
 	}
 }
 
-func getProjectID(client *testrail.Client, projectName string) (int,error) {
+func getProjectID(client *testrail.Client, projectName string) (int, error) {
 	projects, err := client.GetProjects()
 	if err != nil {
 		log.Panicf("Error reading projects: %v\n", err)
 	}
 
-    for _, p := range projects{
-	  //log.Println(p.ID)
-	  //log.Printf("project: %v\n", p)
-	  //log.Printf("project name: %v\n", p.Name)
-	  if p.Name == projectName {
-		  log.Printf("Found project '%s' is id %d\n", projectName, p.ID)
-		  return p.ID, nil
-	  }
+	for _, p := range projects {
+		//log.Println(p.ID)
+		//log.Printf("project: %v\n", p)
+		//log.Printf("project name: %v\n", p.Name)
+		if p.Name == projectName {
+			log.Printf("Found project '%s' is id %d\n", projectName, p.ID)
+			return p.ID, nil
+		}
 	}
-	return 0,errors.New("Couldn't find project")
+	return 0, errors.New("Couldn't find project")
 }
 
 func getSuiteID(client *testrail.Client, projectID int, suiteName string) (int, error) {
@@ -163,14 +176,14 @@ func getSuiteID(client *testrail.Client, projectID int, suiteName string) (int, 
 		log.Panicf("Error reading suites: %v\n", err)
 	}
 
-    for _, s := range suites{
-	  //log.Println(s.ID)
-	  //log.Printf("suite: %v\n", s)
-	  //log.Printf("suite name: %v\n", s.Name)
-	  if s.Name == suiteName {
-		  log.Printf("Found suite '%s' for project '%d' is id %d\n", suiteName, projectID, s.ID)
-		  return s.ID, nil
-	  }
+	for _, s := range suites {
+		//log.Println(s.ID)
+		//log.Printf("suite: %v\n", s)
+		//log.Printf("suite name: %v\n", s.Name)
+		if s.Name == suiteName {
+			log.Printf("Found suite '%s' for project '%d' is id %d\n", suiteName, projectID, s.ID)
+			return s.ID, nil
+		}
 	}
 	return 0, errors.New("Couldn't find suite")
 }
@@ -181,14 +194,14 @@ func getTestCaseID(client *testrail.Client, projectID int, suiteID int, testcase
 		log.Panicf("Error reading testcases: %v\n", err)
 	}
 
-    for _, tc := range testcases{
-	  //log.Println(s.ID)
-	  //log.Printf("suite: %v\n", s)
-	  //log.Printf("suite name: %v\n", s.Name)
-	  if tc.Title == testcaseName {
-		  log.Printf("Found testcase '%s' for suite '%d', project '%d' is id %d\n", testcaseName, suiteID, projectID, tc.ID)
-		  return tc.ID, nil
-	  }
+	for _, tc := range testcases {
+		//log.Println(s.ID)
+		//log.Printf("suite: %v\n", s)
+		//log.Printf("suite name: %v\n", s.Name)
+		if tc.Title == testcaseName {
+			log.Printf("Found testcase '%s' for suite '%d', project '%d' is id %d\n", testcaseName, suiteID, projectID, tc.ID)
+			return tc.ID, nil
+		}
 	}
 	//return 0, errors.New("Couldn't find test case")
 	newTestcase, err := addTestCase(client, suiteID, testcaseName)
@@ -199,28 +212,28 @@ func addTestCase(client *testrail.Client, suiteID int, testcaseName string) (tes
 	now := time.Now().Format("2006-01-02 15:04:05")
 	newTestCase := testrail.SendableCase{
 		Title: testcaseName,
-		Date: now,
+		Date:  now,
 	}
 	tc, err := client.AddCase(suiteID, newTestCase)
-	return tc,err
+	return tc, err
 }
 
 func main() {
 	testrailServer, username, password, projectName, suiteName := readEnvVars()
 	junitDoc := readJunitXML(os.Stdin)
 	client := testrail.NewClient(testrailServer, username, password)
-	projectID,err := getProjectID(client, projectName)
+	projectID, err := getProjectID(client, projectName)
 	if err != nil {
 		log.Panicf("Couldn't find project named '%s'\n", projectName)
 	}
 	log.Printf("Project ID for '%s' is %d\n", projectName, projectID)
-	
+
 	suiteID, err := getSuiteID(client, projectID, suiteName)
 	if err != nil {
 		log.Panicf("Couldn't find suite named '%s' for project '%s'\n", suiteName, projectName)
 	}
 
 	log.Printf("Suitename '%s' has id %d\n", suiteName, suiteID)
-	processResultsToTestRail(junitDoc, client, projectID, suiteID)	
+	processResultsToTestRail(junitDoc, client, projectID, suiteID)
 	//log.Printf("Results: %v\n", success)
 }

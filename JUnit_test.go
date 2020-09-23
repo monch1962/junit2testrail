@@ -33,16 +33,16 @@ func TestReadJUnitConvertToJson(t *testing.T) {
 	`
 	r := strings.NewReader(jUnitSampleXML)
 	dec := xml.NewDecoder(r)
-    dec.CharsetReader = charset.NewReaderLabel
-    dec.Strict = false
+	dec.CharsetReader = charset.NewReaderLabel
+	dec.Strict = false
 
-    var doc Testsuites
-    if err := dec.Decode(&doc); err != nil {
-        t.Fatal(err)
-    }
-    _, err := json.Marshal(doc)
-    if err != nil {
-        t.Fatal(err)
-    }
+	var doc Testsuites
+	if err := dec.Decode(&doc); err != nil {
+		t.Fatal(err)
+	}
+	_, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	//t.Log(string(b))
 }
