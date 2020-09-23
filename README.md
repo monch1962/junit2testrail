@@ -1,5 +1,6 @@
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/monch1962/junit2testrail)
 [![Build Status](https://dev.azure.com/monch1962/monch1962/_apis/build/status/monch1962.junit2testrail?branchName=master)](https://dev.azure.com/monch1962/monch1962/_build/latest?definitionId=12&branchName=master)
+[![codecov](https://codecov.io/gh/monch1962/junit2testrail/branch/master/graph/badge.svg)](https://codecov.io/gh/monch1962/junit2testrail)
 
 # junit2testrail
 Process JUnit test results into TestRail.
