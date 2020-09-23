@@ -48,7 +48,7 @@ type Testsuites struct {
 				Text    string `xml:",chardata"`
 				Message string `xml:"message,attr"`
 			} `xml:"failure"`
-			Skipped string `xml:"skipped"`
+			Skipped *string `xml:"skipped,omitempty"`
 		} `xml:"testcase"`
 	} `xml:"testsuite"`
 }
@@ -108,7 +108,7 @@ func logJunitDetail(tss Testsuites) {
 }
 
 func processResultsToTestRail(j Testsuites, client *testrail.Client, projectID int, suiteID int) {
-	//logJunitDetail(j)
+	logJunitDetail(j)
 	now := time.Now().Format("2006-01-02 15:04:05")
 
 	for _, ts := range j.Testsuite {
@@ -127,8 +127,9 @@ func processResultsToTestRail(j Testsuites, client *testrail.Client, projectID i
 			var tcStatus int
 			if tc.Failure.Text != "" {
 				tcStatus = testrail.StatusFailed
-			} else if tc.Skipped != "" {
-				tcStatus = testrail.StatusUntested
+			} else if tc.Skipped != nil {
+				//tcStatus = testrail.StatusUntested  //StatusUntested results in a failure when posting - library bug??
+				tcStatus = testrail.StatusRetest
 			} else {
 				tcStatus = testrail.StatusPassed
 			}
