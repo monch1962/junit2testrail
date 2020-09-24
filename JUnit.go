@@ -48,7 +48,7 @@ type Testsuites struct {
 				Text    string `xml:",chardata"`
 				Message string `xml:"message,attr"`
 			} `xml:"failure"`
-			Skipped *string `xml:"skipped,omitempty"`
+			Skipped *string `xml:"skipped,omitempty"`  // Note that this is a *string, as an empty value will give a "" while non-existent will give nil. This lets us distinguish a <skipped /> from a non-existent tag
 		} `xml:"testcase"`
 	} `xml:"testsuite"`
 }
