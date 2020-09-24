@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+    <testsuite errors="0" failures="2" hostname="Greg-PC" name="pytest" skipped="6" tests="10" time="0.380" timestamp="2020-05-22T20:45:13.703965">
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="3" name="test_skip_untagged" time="0.000">
+            <skipped message="skip untagged" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:4: skip untagged</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="8" name="test_skip_tagged" time="0.000">
+            <skipped message="skip tagged" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:9: skip tagged</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="14" name="test_skipif_true_untag" time="0.000">
+            <skipped message="skip if 1 &lt; 2" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:15: skip if 1 &lt; 2</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="19" name="test_skipif_false_untag" time="0.002"></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="24" name="test_skipif_true_tag" time="0.000">
+            <skipped message="skip if 1 &lt; 2" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:25: skip if 1 &lt; 2</skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="30" name="test_skipif_false_tag" time="0.000">
+            <properties>
+                <property name="Test Case" value="skipif_false_tag"/>
+            </properties>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="36" name="test_xfail_untag" time="0.001">
+            <skipped message="" type="pytest.xfail"></skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="41" name="test_xfail_tag" time="0.001">
+            <properties>
+                <property name="Test Case" value="fail tag"/>
+            </properties>
+            <skipped message="" type="pytest.xfail"></skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="47" name="test_failed_untag" time="0.002">
+            <failure message="Failed: &lt;Failed instance&gt;">def test_failed_untag():
+&gt;       pytest.fail()
+E       Failed: &lt;Failed instance&gt;
+
+test_sample_set.py:49: Failed</failure>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="51" name="test_failed_tag" time="0.002">
+            <properties>
+                <property name="Test Case" value="testfailed"/>
+            </properties>
+            <failure message="Failed: &lt;Failed instance&gt;">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x000001B1199CAA60&gt;
+
+    def test_failed_tag(record_property):
+        record_property(&apos;Test Case&apos;, &apos;testfailed&apos;)
+&gt;       pytest.fail()
+E       Failed: &lt;Failed instance&gt;
+
+test_sample_set.py:54: Failed</failure>
+    </testcase>
+    </testsuite>
+
+    <testsuite errors="0" failures="2" hostname="Greg-PC" name="pytest" skipped="6" tests="10" time="0.380" timestamp="2020-05-22T20:45:13.703965">
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="3" name="test_skip_untagged" time="0.000">
+            <skipped message="skip untagged" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:4: skip untagged</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="8" name="test_skip_tagged" time="0.000">
+            <skipped message="skip tagged" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:9: skip tagged</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="14" name="test_skipif_true_untag" time="0.000">
+            <skipped message="skip if 1 &lt; 2" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:15: skip if 1 &lt; 2</skipped></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="19" name="test_skipif_false_untag" time="0.002"></testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="24" name="test_skipif_true_tag" time="0.000">
+            <skipped message="skip if 1 &lt; 2" type="pytest.skip">libs\xmlreader\tests\test_sample_set.py:25: skip if 1 &lt; 2</skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="30" name="test_skipif_false_tag" time="0.000">
+            <properties>
+                <property name="Test Case" value="skipif_false_tag"/>
+            </properties>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="36" name="test_xfail_untag" time="0.001">
+            <skipped message="" type="pytest.xfail"></skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="41" name="test_xfail_tag" time="0.001">
+            <properties>
+                <property name="Test Case" value="fail tag"/>
+            </properties>
+            <skipped message="" type="pytest.xfail"></skipped>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="47" name="test_failed_untag" time="0.002">
+            <failure message="Failed: &lt;Failed instance&gt;">def test_failed_untag():
+&gt;       pytest.fail()
+E       Failed: &lt;Failed instance&gt;
+
+test_sample_set.py:49: Failed</failure>
+        </testcase>
+        <testcase classname="libs.xmlreader.tests.test_sample_set" file="libs\xmlreader\tests\test_sample_set.py" line="51" name="test_failed_tag" time="0.002">
+            <properties>
+                <property name="Test Case" value="testfailed"/>
+            </properties>
+            <failure message="Failed: &lt;Failed instance&gt;">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x000001B1199CAA60&gt;
+
+    def test_failed_tag(record_property):
+        record_property(&apos;Test Case&apos;, &apos;testfailed&apos;)
+&gt;       pytest.fail()
+E       Failed: &lt;Failed instance&gt;
+
+test_sample_set.py:54: Failed</failure>
+    </testcase>
+    </testsuite>
+</testsuites>
